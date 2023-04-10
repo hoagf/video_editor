@@ -141,19 +141,6 @@ class _VideoEditorState extends State<VideoEditor> {
     );
   }
 
-  void _exportCover() async {
-    await _controller.extractCover(
-      onError: (e, s) => _showErrorSnackBar("Error on cover exportation :("),
-      onCompleted: (cover) {
-        if (!mounted) return;
-
-        showDialog(
-          context: context,
-          builder: (_) => CoverResultPopup(cover: cover),
-        );
-      },
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -208,7 +195,6 @@ class _VideoEditorState extends State<VideoEditor> {
                                           ),
                                         ],
                                       ),
-                                      CoverViewer(controller: _controller)
                                     ],
                                   ),
                                 ),
@@ -252,7 +238,7 @@ class _VideoEditorState extends State<VideoEditor> {
                                                   MainAxisAlignment.center,
                                               children: _trimSlider(),
                                             ),
-                                            _coverSelection(),
+
                                           ],
                                         ),
                                       ),
@@ -338,10 +324,6 @@ class _VideoEditorState extends State<VideoEditor> {
                 icon: const Icon(Icons.save),
                 itemBuilder: (context) => [
                   PopupMenuItem(
-                    onTap: _exportCover,
-                    child: const Text('Export cover'),
-                  ),
-                  PopupMenuItem(
                     onTap: _exportVideo,
                     child: const Text('Export video'),
                   ),
@@ -403,30 +385,4 @@ class _VideoEditorState extends State<VideoEditor> {
     ];
   }
 
-  Widget _coverSelection() {
-    return SingleChildScrollView(
-      child: Center(
-        child: Container(
-          margin: const EdgeInsets.all(15),
-          child: CoverSelection(
-            controller: _controller,
-            size: height + 10,
-            quantity: 8,
-            selectedCoverBuilder: (cover, size) {
-              return Stack(
-                alignment: Alignment.center,
-                children: [
-                  cover,
-                  Icon(
-                    Icons.check_circle,
-                    color: const CoverSelectionStyle().selectedBorderColor,
-                  )
-                ],
-              );
-            },
-          ),
-        ),
-      ),
-    );
-  }
 }

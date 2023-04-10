@@ -8,7 +8,6 @@ import 'package:path/path.dart' as path;
 import 'package:flutter/material.dart';
 import 'package:video_editor/domain/entities/file_format.dart';
 import 'package:video_editor/domain/helpers.dart';
-import 'package:video_editor/domain/thumbnails.dart';
 import 'package:video_player/video_player.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -16,7 +15,7 @@ import 'package:video_editor/domain/entities/crop_style.dart';
 import 'package:video_editor/domain/entities/trim_style.dart';
 import 'package:video_editor/domain/entities/cover_style.dart';
 import 'package:video_editor/domain/entities/cover_data.dart';
-import 'package:video_thumbnail/video_thumbnail.dart';
+
 
 class VideoMinDurationError extends Error {
   final Duration minDuration;
@@ -253,7 +252,6 @@ class VideoEditorController extends ChangeNotifier {
     }
 
     cropAspectRatio(aspectRatio);
-    generateDefaultCoverThumbnail();
 
     notifyListeners();
   }
@@ -410,14 +408,7 @@ class VideoEditorController extends ChangeNotifier {
     }
   }
 
-  /// Generate cover at [startTrim] time in milliseconds
-  void generateDefaultCoverThumbnail() async {
-    final defaultCover = await generateSingleCoverThumbnail(
-      file.path,
-      timeMs: startTrim.inMilliseconds,
-    );
-    updateSelectedCover(defaultCover);
-  }
+
 
   /// Get the [selectedCover] notifier
   ValueNotifier<CoverData?> get selectedCoverNotifier => _selectedCover;
@@ -665,15 +656,6 @@ class VideoEditorController extends ChangeNotifier {
   /// If this [selectedCoverVal] is `null`, then it return the first frame of this video.
   ///
   /// The [quality] param specifies the quality of the generated cover, from 0 to 100 (([more info](https://pub.dev/packages/video_thumbnail)))
-  Future<String?> _generateCoverFile({int quality = 100}) async {
-    return await VideoThumbnail.thumbnailFile(
-      imageFormat: ImageFormat.JPEG,
-      thumbnailPath: (await getTemporaryDirectory()).path,
-      video: file.path,
-      timeMs: selectedCoverVal?.timeMs ?? startTrim.inMilliseconds,
-      quality: quality,
-    );
-  }
 
   /// Export this selected cover, or by default the first one, return an image [File].
   ///
@@ -696,64 +678,5 @@ class VideoEditorController extends ChangeNotifier {
   /// This function return [Statistics] from FFmpeg session.
   ///
   /// Set [isFiltersEnabled] to `false` if you do not want to apply any changes
-  Future<void> extractCover({
-    required void Function(File file) onCompleted,
-    void Function(Object, StackTrace)? onError,
-    String? name,
-    String? outDir,
-    CoverExportFormat format = CoverExportFormat.jpg,
-    double scale = 1.0,
-    int quality = 100,
-    void Function(Statistics)? onProgress,
-    bool isFiltersEnabled = true,
-  }) async {
-    // file generated from the thumbnail library or video source
-    final String? coverPath = await _generateCoverFile(quality: quality);
-    if (coverPath == null) {
-      if (onError != null) {
-        onError(
-          Exception('VideoThumbnail library error while exporting the cover'),
-          StackTrace.current,
-        );
-      }
-      return;
-    }
-    final String outputPath = await _getOutputPath(
-      filePath: coverPath,
-      name: name,
-      outputDirectory: outDir,
-      format: format,
-    );
-    final String filter =
-        _getExportFilters(scale: scale, isFiltersEnabled: isFiltersEnabled);
-    // ignore: unnecessary_string_escapes
-    final String execute = "-i \'$coverPath\' $filter -y $outputPath";
 
-    debugPrint('VideoEditor - run export cover command : [$execute]');
-
-    // PROGRESS CALLBACKS
-    FFmpegKit.executeAsync(
-      execute,
-      (session) async {
-        final state =
-            FFmpegKitConfig.sessionStateToString(await session.getState());
-        final code = await session.getReturnCode();
-
-        if (ReturnCode.isSuccess(code)) {
-          onCompleted(File(outputPath));
-        } else {
-          if (onError != null) {
-            onError(
-              Exception(
-                  'FFmpeg process exited with state $state and return code $code.\n${await session.getOutput()}'),
-              StackTrace.current,
-            );
-          }
-          return;
-        }
-      },
-      null,
-      onProgress,
-    );
-  }
 }
