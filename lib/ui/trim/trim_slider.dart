@@ -3,7 +3,6 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:video_editor/domain/bloc/controller.dart';
-import 'package:video_editor/ui/trim/thumbnail_slider.dart';
 import 'package:video_editor/ui/trim/trim_slider_painter.dart';
 
 enum _TrimBoundaries { left, right, inside, progress }
@@ -604,11 +603,6 @@ class _TrimSliderState extends State<TrimSlider>
                         child: SizedBox(
                           height: widget.height,
                           width: _fullLayout.width,
-                          child: ThumbnailSlider(
-                            controller: widget.controller,
-                            height: widget.height,
-                            quality: widget.quality,
-                          ),
                         ),
                       ),
                       if (widget.child != null)
